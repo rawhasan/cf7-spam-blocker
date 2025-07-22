@@ -78,7 +78,6 @@ add_action('plugins_loaded', function () {
             <tr valign="top">
                 <th scope="row">Blocked Keywords</th>
                 <td>
-        // Fetch and process blocked keywords from settings
                     <textarea name="cf7_spam_blocker_keywords" rows="5" cols="50">' . esc_textarea(get_option('cf7_spam_blocker_keywords')) . '</textarea>
                     <p class="description">Enter comma-separated keywords (e.g. viagra, casino, forex)</p>
                 </td>
@@ -86,7 +85,6 @@ add_action('plugins_loaded', function () {
             <tr valign="top">
                 <th scope="row">Block Messages with Links</th>
                 <td>
-        // Check if link blocking is enabled
                     <input type="checkbox" name="cf7_block_links" value="1" ' . checked(1, get_option('cf7_block_links'), false) . ' />
                     <label for="cf7_block_links">Enable link blocking (http://, https://, www.)</label>
                 </td>
@@ -104,7 +102,6 @@ add_action('plugins_loaded', function () {
         // Handle export of plugin settings to JSON
         if (isset($_POST['cf7_export_settings'])) {
             $export_data = [
-        // Fetch and process blocked keywords from settings
                 'keywords'    => get_option('cf7_spam_blocker_keywords', ''),
                 'block_links' => get_option('cf7_block_links', 0),
             ];
@@ -165,7 +162,6 @@ add_action('plugins_loaded', function () {
 
     if (true) {
             $value = isset($_POST[$name]) ? strtolower($_POST[$name]) : '';
-        // Fetch and process blocked keywords from settings
             $keywords_raw = get_option('cf7_spam_blocker_keywords', '');
             $keywords = array_filter(array_map('trim', explode(',', strtolower($keywords_raw))));
 
@@ -178,7 +174,6 @@ add_action('plugins_loaded', function () {
                 }
             }
 
-        // Check if link blocking is enabled
             if (get_option('cf7_block_links')) {
                 $link_patterns = ['/https?:\/\/\S+/i', '/www\.\S+/i'];
                 foreach ($link_patterns as $pattern) {
@@ -203,9 +198,9 @@ add_action('plugins_loaded', function () {
         $time = current_time('mysql');
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-        $line = sprintf("[%s] Blocked in field "%s" | Type: %s | Match: %s | IP: %s
-    ", $time, $field, $type, $match, $ip);
-    // Append log entry to spam log file
+        $line = sprintf('[%s] Blocked in field "%s" | Type: %s | Match: %s | IP: %s', $time, $field, $type, $match, $ip);
+
+        // Append log entry to spam log file
         @file_put_contents($log_file, $line, FILE_APPEND | LOCK_EX);
     }
 });
