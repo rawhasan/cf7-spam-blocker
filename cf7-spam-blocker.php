@@ -119,7 +119,9 @@ add_action('plugins_loaded', function () {
         </form>';
 
         echo '<hr><h2>Spam Block Log</h2>';
-        $log_file = plugin_dir_path(__FILE__) . 'cf7-spam-blocker.log';
+        $upload_dir = wp_upload_dir();
+        $log_file = trailingslashit($upload_dir['basedir']) . 'cf7-spam-blocker.log';
+
 
         // Handle log file deletion
         if (isset($_POST['cf7_clear_log']) && file_exists($log_file)) {
@@ -192,7 +194,9 @@ add_action('plugins_loaded', function () {
 
 // Log details of blocked message to a file
     function cf7_spam_blocker_log_event($field, $type, $match) {
-        $log_file = plugin_dir_path(__FILE__) . 'cf7-spam-blocker.log';
+        $upload_dir = wp_upload_dir();
+        $log_file = trailingslashit($upload_dir['basedir']) . 'cf7-spam-blocker.log';
+
 
         $time = current_time('mysql');
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
