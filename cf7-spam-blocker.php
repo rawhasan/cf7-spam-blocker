@@ -198,7 +198,7 @@ add_action('plugins_loaded', function () {
         $time = current_time('mysql');
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-        $line = sprintf('[%s] Blocked in field "%s" | Type: %s | Match: %s | IP: %s', $time, $field, $type, $match, $ip);
+        $line = sprintf('[%s] Blocked in field "%s" | Type: %s | Match: %s | IP: %s', $time, $field, $type, $match, $ip) . PHP_EOL;
 
         // Append log entry to spam log file
         @file_put_contents($log_file, $line, FILE_APPEND | LOCK_EX);
