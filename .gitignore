@@ -1,0 +1,21 @@
+# WordPress Plugin .gitignore
+
+# Ignore log files and OS/system files
+*.log
+*.DS_Store
+Thumbs.db
+
+# Ignore build/output/archive files
+*.zip
+
+# Ignore IDE/editor folders
+.vscode/
+.idea/
+
+# Ignore local dev tools and environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore plugin-specific runtime files
+cf7-spam-log.txt
