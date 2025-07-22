@@ -119,8 +119,7 @@ add_action('plugins_loaded', function () {
         </form>';
 
         echo '<hr><h2>Spam Block Log</h2>';
-        $upload_dir = wp_upload_dir();
-        $log_file = trailingslashit($upload_dir['basedir']) . 'cf7-spam-blocker.log';
+        $log_file = plugin_dir_path(__FILE__) . 'cf7-spam-blocker.log';
 
         // Handle log file deletion
         if (isset($_POST['cf7_clear_log']) && file_exists($log_file)) {
@@ -138,8 +137,7 @@ add_action('plugins_loaded', function () {
             $lines = array_reverse($lines);
             echo '<div style="max-height:300px; overflow:auto; background:#fff; padding:10px; border:1px solid #ccc;"><pre>';
             foreach (array_slice($lines, 0, 100) as $line) {
-                echo esc_html($line) . "
-    ";
+                echo esc_html($line) . PHP_EOL;
             }
             echo '</pre></div>';
         } else {
@@ -179,7 +177,9 @@ add_action('plugins_loaded', function () {
                 foreach ($link_patterns as $pattern) {
                 // Match message against link patterns
                     if (preg_match($pattern, $value)) {
-                        cf7_spam_blocker_log_event($name, 'link', $pattern);
+                        $label = ($pattern === '/www\.\S+/i') ? 'www' : 'http(s)';
+                        cf7_spam_blocker_log_event($name, 'link', $label);
+
                         $result->invalidate($tag, "Messages with links are not allowed.");
                         return $result;
                     }
@@ -192,8 +192,7 @@ add_action('plugins_loaded', function () {
 
 // Log details of blocked message to a file
     function cf7_spam_blocker_log_event($field, $type, $match) {
-        $upload_dir = wp_upload_dir();
-        $log_file = trailingslashit($upload_dir['basedir']) . 'cf7-spam-blocker.log';
+        $log_file = plugin_dir_path(__FILE__) . 'cf7-spam-blocker.log';
 
         $time = current_time('mysql');
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
