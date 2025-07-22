@@ -141,13 +141,14 @@ add_action('plugins_loaded', function () {
     }
 
     add_filter('wpcf7_validate_textarea*', 'cf7_spam_block_keywords_and_links', 10, 2);
+    add_filter('wpcf7_validate_text*', 'cf7_spam_block_keywords_and_links', 10, 2);
+    add_filter('wpcf7_validate_text', 'cf7_spam_block_keywords_and_links', 10, 2);
     add_filter('wpcf7_validate_textarea', 'cf7_spam_block_keywords_and_links', 10, 2);
 
     function cf7_spam_block_keywords_and_links($result, $tag) {
         $name = $tag['name'];
-        $target_fields = ['your-message', 'your-subject'];
 
-        if (in_array($name, $target_fields)) {
+    if (true) {
             $value = isset($_POST[$name]) ? strtolower($_POST[$name]) : '';
             $keywords_raw = get_option('cf7_spam_blocker_keywords', '');
             $keywords = array_filter(array_map('trim', explode(',', strtolower($keywords_raw))));
@@ -182,7 +183,7 @@ add_action('plugins_loaded', function () {
         $time = current_time('mysql');
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-        $line = sprintf("[%s] Blocked in field \"%s\" | Type: %s | Match: %s | IP: %s
+        $line = sprintf("[%s] Blocked in field "%s" | Type: %s | Match: %s | IP: %s
     ", $time, $field, $type, $match, $ip);
         @file_put_contents($log_file, $line, FILE_APPEND | LOCK_EX);
     }
