@@ -6,7 +6,9 @@ Version: 2.2
 Author: Raw Hasan
 */
 
+// Ensure all plugins are loaded before checking for CF7
 add_action('plugins_loaded', function () {
+    // Show admin notice if Contact Form 7 is not installed
     if (!defined('WPCF7_VERSION')) {
         add_action('admin_notices', function () {
             echo '<div class="notice notice-error"><p><strong>CF7 Spam Blocker</strong> requires Contact Form 7 to work. Please install and activate it.</p></div>';
@@ -24,7 +26,9 @@ add_action('plugins_loaded', function () {
     }
 
 
+    // Register plugin settings menu in WP admin
     add_action('admin_menu', 'cf7_spam_blocker_settings_menu');
+    // Register plugin options (keywords and link blocking)
     add_action('admin_init', 'cf7_spam_blocker_register_settings');
 
     function cf7_spam_blocker_settings_menu() {
@@ -42,8 +46,10 @@ add_action('plugins_loaded', function () {
         register_setting('cf7_spam_blocker_options', 'cf7_block_links');
     }
 
+// Display and handle the plugin admin settings page
     function cf7_spam_blocker_settings_page() {
         // Handle import
+        // Handle import of plugin settings from JSON
         if (isset($_POST['cf7_import_settings']) && current_user_can('manage_options')) {
             if (!empty($_FILES['cf7_import_file']['tmp_name'])) {
                 $import_data = file_get_contents($_FILES['cf7_import_file']['tmp_name']);
@@ -72,6 +78,7 @@ add_action('plugins_loaded', function () {
             <tr valign="top">
                 <th scope="row">Blocked Keywords</th>
                 <td>
+        // Fetch and process blocked keywords from settings
                     <textarea name="cf7_spam_blocker_keywords" rows="5" cols="50">' . esc_textarea(get_option('cf7_spam_blocker_keywords')) . '</textarea>
                     <p class="description">Enter comma-separated keywords (e.g. viagra, casino, forex)</p>
                 </td>
@@ -79,6 +86,7 @@ add_action('plugins_loaded', function () {
             <tr valign="top">
                 <th scope="row">Block Messages with Links</th>
                 <td>
+        // Check if link blocking is enabled
                     <input type="checkbox" name="cf7_block_links" value="1" ' . checked(1, get_option('cf7_block_links'), false) . ' />
                     <label for="cf7_block_links">Enable link blocking (http://, https://, www.)</label>
                 </td>
@@ -93,8 +101,10 @@ add_action('plugins_loaded', function () {
             <input type="submit" name="cf7_export_settings" class="button button-secondary" value="Export Settings as JSON">
         </form>';
 
+        // Handle export of plugin settings to JSON
         if (isset($_POST['cf7_export_settings'])) {
             $export_data = [
+        // Fetch and process blocked keywords from settings
                 'keywords'    => get_option('cf7_spam_blocker_keywords', ''),
                 'block_links' => get_option('cf7_block_links', 0),
             ];
@@ -115,11 +125,13 @@ add_action('plugins_loaded', function () {
         $upload_dir = wp_upload_dir();
         $log_file = trailingslashit($upload_dir['basedir']) . 'cf7-spam-blocker.log';
 
+        // Handle log file deletion
         if (isset($_POST['cf7_clear_log']) && file_exists($log_file)) {
             unlink($log_file);
             echo '<div class="updated"><p>Log file deleted successfully.</p></div>';
         }
 
+        // Show log file contents if available
         if (file_exists($log_file)) {
             echo '<form method="post">';
             echo '<p><input type="submit" name="cf7_clear_log" class="button" value="Delete Log File"></p>';
@@ -141,19 +153,24 @@ add_action('plugins_loaded', function () {
     }
 
     add_filter('wpcf7_validate_textarea*', 'cf7_spam_block_keywords_and_links', 10, 2);
+    // Hook into validation for text fields (wildcard and regular)
     add_filter('wpcf7_validate_text*', 'cf7_spam_block_keywords_and_links', 10, 2);
     add_filter('wpcf7_validate_text', 'cf7_spam_block_keywords_and_links', 10, 2);
+    // Hook into validation for textarea fields
     add_filter('wpcf7_validate_textarea', 'cf7_spam_block_keywords_and_links', 10, 2);
 
+// Main validation function that checks input for spam keywords or links
     function cf7_spam_block_keywords_and_links($result, $tag) {
         $name = $tag['name'];
 
     if (true) {
             $value = isset($_POST[$name]) ? strtolower($_POST[$name]) : '';
+        // Fetch and process blocked keywords from settings
             $keywords_raw = get_option('cf7_spam_blocker_keywords', '');
             $keywords = array_filter(array_map('trim', explode(',', strtolower($keywords_raw))));
 
             foreach ($keywords as $word) {
+                // Check for presence of any blocked keyword
                 if ($word && strpos($value, $word) !== false) {
                     cf7_spam_blocker_log_event($name, 'keyword', $word);
                     $result->invalidate($tag, "Your message contains disallowed words.");
@@ -161,9 +178,11 @@ add_action('plugins_loaded', function () {
                 }
             }
 
+        // Check if link blocking is enabled
             if (get_option('cf7_block_links')) {
                 $link_patterns = ['/https?:\/\/\S+/i', '/www\.\S+/i'];
                 foreach ($link_patterns as $pattern) {
+                // Match message against link patterns
                     if (preg_match($pattern, $value)) {
                         cf7_spam_blocker_log_event($name, 'link', $pattern);
                         $result->invalidate($tag, "Messages with links are not allowed.");
@@ -176,6 +195,7 @@ add_action('plugins_loaded', function () {
         return $result;
     }
 
+// Log details of blocked message to a file
     function cf7_spam_blocker_log_event($field, $type, $match) {
         $upload_dir = wp_upload_dir();
         $log_file = trailingslashit($upload_dir['basedir']) . 'cf7-spam-blocker.log';
@@ -185,6 +205,7 @@ add_action('plugins_loaded', function () {
 
         $line = sprintf("[%s] Blocked in field "%s" | Type: %s | Match: %s | IP: %s
     ", $time, $field, $type, $match, $ip);
+    // Append log entry to spam log file
         @file_put_contents($log_file, $line, FILE_APPEND | LOCK_EX);
     }
 });
