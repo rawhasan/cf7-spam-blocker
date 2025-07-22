@@ -3,7 +3,7 @@
 Plugin Name: CF7 Spam Blocker
 Description: Blocks Contact Form 7 submissions containing disallowed keywords or links, with file-based logging and admin interface.
 Version: 2.2
-Author: Your Name
+Author: Raw Hasan
 */
 
 // Exit if CF7 is not active
