@@ -1,44 +1,88 @@
-# CF7 Spam Blocker
+# 🛡️ CF7 Spam Blocker Plugin
 
-Block spam submissions in Contact Form 7 using user-defined keywords or link detection.
+This plugin blocks spam submissions in **Contact Form 7** (CF7) forms using regex and keyword-based filtering, with detailed logging.
 
-## ✅ Features
 
-- Define a list of spam keywords
-- Optionally block messages containing links
-- File-based logging (no database usage)
-- Admin panel for keywords, logs, and stats
-- Lightweight and secure
 
----
+## ✅ Key Functionalities
 
-## 🔧 How It Works
+### 1. **Regex-based Spam Filtering**
+- Scans all CF7 form fields for suspicious content using predefined **regex patterns**.
+- Blocks fields containing:
+  - Email addresses in non-email fields
+  - Links (e.g., `http://`, `https://`, `www.`)
+  - HTML tags
+  - Foreign alphabets (e.g., Cyrillic, Japanese, Arabic)
+  - Encoded characters or emoji
+  - Phone numbers and formatted numbers
+- Patterns are defined in a PHP array named `$regex_checks`.
 
-Hooks into CF7 validation to block:
-- Submissions with any blocked keywords
-- Submissions containing links (http/https)
+### 2. **Keyword-based Spam Filtering**
+- Blocks messages containing blacklisted **keywords**.
+- Keywords are stored in the WordPress options table under the key:
+  
+  ``cf7_spam_blocked_keywords``
+  
+- Supports:
+  - Case-insensitive matching
+  - Trimming for extra whitespace
+- You can update the keyword list programmatically or via the database.
 
-Displays blocked message count and log entries in the admin panel.
+### 3. **Spam Logging**
+- Every blocked submission is logged to a file:
+  
+  ``wp-content/uploads/cf7-spam-logs/spam-log.txt``
 
----
+- Each entry includes:
+  - Timestamp
+  - Field name
+  - Block type (Regex / Keyword)
+  - Matched pattern or word
+  - IP address
 
-## 📁 Folder Structure
+- Log entry format:
 
-```
-cf7-spam-blocker/
-├── cf7-spam-blocker.php
-└── readme.txt
-```
+  ``[YYYY-MM-DD HH:MM:SS] Blocked in field "field_name" | Type: Regex | Match: http | IP: 123.45.67.89``
 
----
+### 4. **Admin Feedback**
+- Users receive the following generic error if their message is blocked:
 
-## 🛡️ Developed By
+    ````text
+    There was an error trying to send your message. Please try again later.
+    ````
 
-[Nijhoom Tours](https://nijhoom.com) — award-winning cultural tours in Bangladesh for travelers aged 50+.
+- No spam details are disclosed to avoid filter circumvention.
 
----
+### 5. **Plugin Activation Hook**
+- On plugin activation:
+- Initializes an empty array in the `cf7_spam_blocked_keywords` option if not already set.
+- Ensures the logging directory `cf7-spam-logs` is created with write permissions.
 
-## 📦 Download
 
-Official WordPress Plugin Repository:  
-[https://wordpress.org/plugins/cf7-spam-blocker/](https://wordpress.org/plugins/cf7-spam-blocker/)
+
+
+
+
+## 🧠 Internal Mechanism
+
+- Hooks into:
+
+``wpcf7_before_send_mail``
+
+- For each submission:
+1. Iterates over all submitted fields.
+2. Runs regex filters first.
+3. If regex passes, runs keyword checks.
+4. If any match is found:
+   - Logs the attempt
+   - Returns a generic error
+   - Prevents email from sending
+
+
+
+
+
+## 🧩 Possible Enhancements
+
+- WP Admin settings page to manage keywords.
+- Auto-purge or rotate logs.
