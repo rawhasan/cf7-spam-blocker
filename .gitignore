@@ -19,3 +19,6 @@ Thumbs.db
 
 # Ignore plugin-specific runtime files
 cf7-spam-log.txt
+
+# Ignore the backup files
+.backup
