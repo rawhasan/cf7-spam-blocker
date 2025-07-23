@@ -2,7 +2,7 @@
 
 This plugin blocks spam submissions in **Contact Form 7** (CF7) forms using regex and keyword-based filtering, with detailed logging.
 
-
+**Known Issue: Form in not being submitted with CloudFlare. Keeps rotating. Need to fix.**
 
 ## ✅ Key Functionalities
 

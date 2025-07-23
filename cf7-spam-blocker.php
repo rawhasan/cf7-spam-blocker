@@ -20,9 +20,10 @@ add_action('plugins_loaded', function () {
     add_action('admin_menu', 'cf7_spam_blocker_settings_menu');
     add_action('admin_init', 'cf7_spam_blocker_register_settings');
 
-    // Hook into form submission
-    add_action('wpcf7_before_send_mail', 'cf7_spam_block_keywords_and_links');
+    // ✅ Use filter instead of action so return value is honored
+    add_filter('wpcf7_before_send_mail', 'cf7_spam_block_keywords_and_links', 20, 1);
 });
+
 
 // Settings Menu
 function cf7_spam_blocker_settings_menu() {
@@ -60,33 +61,47 @@ function cf7_spam_blocker_settings_page() {
 }
 
 // Spam Filtering Logic
-function cf7_spam_block_keywords_and_links($contact_form) {
+function cf7_spam_block_keywords_and_links($result, $tag) {
     $submission = WPCF7_Submission::get_instance();
-    if (!$submission) return;
+    if (!$submission) return $result;
 
     $data = $submission->get_posted_data();
-    $blocked_keywords = explode(',', get_option('cf7_spam_blocked_keywords', ''));
+    $option = get_option('cf7_spam_blocked_keywords', '');
+    $blocked_keywords = is_array($option) ? $option : array_map('trim', explode(',', $option));
     $block_links = get_option('cf7_spam_block_links', false);
     $ip = $_SERVER['REMOTE_ADDR'];
     $time = date('Y-m-d H:i:s');
+    $log_dir = wp_upload_dir()['basedir'] . '/cf7-spam-logs';
+    $log_file = $log_dir . '/debug-log.txt';
+
+    if (!is_dir($log_dir)) wp_mkdir_p($log_dir);
+    file_put_contents($log_file, "=== $time: VALIDATION START ===\n", FILE_APPEND);
+    file_put_contents($log_file, print_r($data, true), FILE_APPEND);
 
     foreach ($data as $field => $value) {
+        if (!is_string($value)) continue;
+
+        file_put_contents($log_file, "Checking [$field]: \"$value\"\n", FILE_APPEND);
+
         foreach ($blocked_keywords as $keyword) {
-            $keyword = trim($keyword);
             if ($keyword && stripos($value, $keyword) !== false) {
-                $submission->set_status('spam');
                 cf7_spam_blocker_log_event($time, $field, 'keyword', $keyword, $ip);
-                return;
+                file_put_contents($log_file, "  → BLOCKED by keyword: \"$keyword\"\n", FILE_APPEND);
+                return $result->invalidate($tag, 'There was an error trying to send your message. Please try again later.');
             }
         }
 
         if ($block_links && preg_match('/https?:\/\/\S+/i', $value)) {
-            $submission->set_status('spam');
             cf7_spam_blocker_log_event($time, $field, 'link', 'http/https', $ip);
-            return;
+            file_put_contents($log_file, "  → BLOCKED by link in [$field]\n", FILE_APPEND);
+            return $result->invalidate($tag, 'There was an error trying to send your message. Please try again later.');
         }
     }
+
+    file_put_contents($log_file, "Submission passed validation\n", FILE_APPEND);
+    return $result;
 }
+
 
 // Logging Function
 function cf7_spam_blocker_log_event($time, $field, $type, $match, $ip) {
